@@ -1,5 +1,4 @@
 import { Task } from "../model/task_model";
-import { KafkaDLQConfig } from "../config/kafka";
 import axios from "axios";
 import { logger } from "../utils/logger";
 import { calculateExponentialBackoff, calculateNextRetryTime } from "../utils/backoff";
@@ -61,16 +60,9 @@ export const process_task = async (task: any) => {
             });
             return pending_task;
         } else {
-            console.log(`Task failed, sending to DLQ`);
-            const kafka = new KafkaDLQConfig();
-            await kafka.produce([{
-                value: JSON.stringify({
-                    taskId,
-                    reason: error.message,
-                    retries,
-                    maxRetries
-                })
-            }]);
+            // Max retries reached - BullMQ will handle DLQ
+            console.log(`Task ${taskId} failed after ${retries} attempts, will be moved to DLQ`);
+            
             const { data: pending_task } = await axios.post(
                 "http://localhost:3001/api/db/events",
                 {
@@ -80,12 +72,15 @@ export const process_task = async (task: any) => {
                     }
                 }
             );
+            
             logger.info({
-                message: "Task failed",
+                message: "Task failed and will be moved to DLQ",
                 taskId: task._id,
                 event: "TASK FAILED",
             });
-            return pending_task;
+            
+            // Throw error so BullMQ marks job as failed and moves to DLQ
+            throw new Error(`Task failed after ${retries} attempts`);
         }
 
     }

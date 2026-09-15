@@ -1,5 +1,5 @@
 import axios from "axios";
-import { KafkaConfig } from "../config/kafka";
+import { QueueConfig } from "../config/queue";
 import { Task } from "../model/task_model";
 import { logger } from "../utils/logger";
 import { isReadyForRetry } from "../utils/backoff";
@@ -26,7 +26,7 @@ export const schedule_tasks = async () => {
 
     console.log(`${tasksReadyForExecution.length} out of ${allSchedulableTasks.length} schedulable tasks are ready for execution`);
 
-    const kafkaConfig = new KafkaConfig();
+    const queueConfig = new QueueConfig();
 
     for (const task of tasksReadyForExecution) {
         try {
@@ -47,12 +47,12 @@ export const schedule_tasks = async () => {
             })
             
             logger.info({
-                message: "Producing task to Kafka for processing",
+                message: "Adding task to BullMQ queue for processing",
                 taskId: task._id,
-                event: "PRODUCING TASK TO KAFKA",
+                event: "ADDING TASK TO QUEUE",
             });
             
-            await kafkaConfig.produce("task-topic", task);
+            await queueConfig.addTask(task.toObject());
         } catch (error) {
             logger.error({
                 message: "Error scheduling task",

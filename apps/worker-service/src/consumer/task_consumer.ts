@@ -1,21 +1,39 @@
 import { connectToDatabase } from "../config/database";
-import { KafkaConfig } from "../config/kafka";
+import { WorkerConfig } from "../config/queue";
 import { process_task } from "../handler/task_handler";
-
+import { Job } from 'bullmq';
 
 export const task_consumer = async () => {
     try {
         await connectToDatabase();
-        console.log("Starting Task Consumer...");
-        const kafka = new KafkaConfig();
-        await kafka.consumer.connect();
-        await kafka.consumer.subscribe({ topic: 'task-topic' });
-        await kafka.consumer.run({
-            eachMessage: async ({ topic, partition, message } : any) => {
-                process_task(JSON.parse(message.value.toString()));
-            },
+        console.log("Starting Task Consumer with BullMQ Worker...");
+        
+        // Define the job processor
+        const processor = async (job: Job) => {
+            console.log(`Processing job ${job.id} with task ${job.data._id}`);
+            await process_task(job.data);
+        };
+
+        // Initialize worker
+        const workerConfig = new WorkerConfig(processor);
+        
+        console.log("Worker is now listening for tasks...");
+
+        // Graceful shutdown
+        process.on('SIGINT', async () => {
+            console.log('Shutting down worker gracefully...');
+            await workerConfig.close();
+            process.exit(0);
         });
+
+        process.on('SIGTERM', async () => {
+            console.log('Shutting down worker gracefully...');
+            await workerConfig.close();
+            process.exit(0);
+        });
+
     } catch (error) {
-        console.error(error);
+        console.error('Error starting worker:', error);
+        process.exit(1);
     }
 }
