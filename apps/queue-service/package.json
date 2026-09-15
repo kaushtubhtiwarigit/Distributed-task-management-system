@@ -1,0 +1,21 @@
+{
+  "name": "queue-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/index.ts",
+    "build": "tsc .",
+    "start": "node src/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "kafkajs": "^2.2.4",
+    "nodemon": "^3.1.9"
+  },
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  }
+}

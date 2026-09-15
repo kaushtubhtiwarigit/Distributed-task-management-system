@@ -1,0 +1,30 @@
+{
+  "name": "distributed-task-manager",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "lint": "eslint apps --ext .ts,.js",
+    "format": "prettier --write 'apps/**/*.{ts,js,json,md}'",
+    "test:backoff": "node test-backoff.js",
+    "start:api": "cd apps/api-service && pnpm start",
+    "start:worker": "cd apps/worker-service && pnpm start",
+    "start:scheduler": "cd apps/schedular-service && pnpm start",
+    "start:databus": "cd apps/databus-service && pnpm start",
+    "start:dlq": "cd apps/dlq-service && pnpm start",
+    "start:all": "concurrently \"pnpm start:databus\" \"pnpm start:api\" \"pnpm start:scheduler\" \"pnpm start:worker\" \"pnpm start:dlq\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.9.0",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.31.1",
+    "@typescript-eslint/parser": "^8.31.1",
+    "concurrently": "^8.2.2",
+    "eslint": "^9.25.1",
+    "eslint-config-prettier": "^10.1.2",
+    "eslint-plugin-import": "^2.31.0",
+    "prettier": "^3.5.3"
+  }
+}
